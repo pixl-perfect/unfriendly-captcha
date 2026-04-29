@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnfriendlyCaptcha™</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  background: #efefea;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 430px;
+  overflow: hidden;
+  box-shadow: 0 0 4px 1px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.card-header {
+  background: #f9f9f9;
+  border-bottom: 1px solid #ebebeb;
+  padding: 11px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-title { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.header-meta { display: flex; align-items: center; gap: 12px; }
+.step-label { font-size: 11px; color: #5f6368; }
+.brand {
+  font-size: 11px; color: #5f6368;
+  display: flex; align-items: center; gap: 5px;
+  font-weight: 500; letter-spacing: 0.01em;
+}
+.brand-logo { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* Dots */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 0 0;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #e5e5e0;
+  transition: background 0.25s;
+}
+.dot.active { background: #1a73e8; }
+.dot.done { background: #1c3aa9; }
+
+/* Body */
+.card-body { padding: 20px; min-height: 240px; }
+
+/* Footer */
+.card-footer {
+  background: #f9f9f9;
+  border-top: 1px solid #ebebeb;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-note { font-size: 11px; color: #5f6368; }
+.footer-links { font-size: 11px; color: #5f6368; }
+.footer-links a { color: #5f6368; text-decoration: none; }
+.footer-links a:hover { text-decoration: underline; }
+
+/* Typography */
+.instruction {
+  font-size: 14px; color: #555; margin-bottom: 16px; line-height: 1.55;
+}
+.instruction strong { color: #1a1a1a; font-weight: 500; }
+.step-note {
+  font-size: 12px; color: #aaa;
+  margin-top: 8px; min-height: 16px; text-align: right;
+}
+
+/* Buttons */
+button {
+  font-family: inherit; font-size: 13px;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.14);
+  border-radius: 8px; padding: 8px 16px;
+  cursor: pointer; color: #1a1a1a;
+  transition: background 0.12s, transform 0.08s;
+}
+button:hover { background: #f5f5f0; }
+button:active { transform: scale(0.98); }
+button:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
+button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+button.primary:hover { background: #333; }
+button.full { width: 100%; }
+
+/* ── STEP 0: Consent wall ── */
+.consent-scroll {
+  max-height: 240px; overflow-y: auto;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px; padding: 2px 0; margin-bottom: 12px;
+}
+.consent-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px; gap: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.consent-item:last-child { border-bottom: none; }
+.consent-label { font-size: 12px; color: #444; flex: 1; line-height: 1.3; }
+.toggle-wrap { position: relative; width: 32px; height: 18px; flex-shrink: 0; }
+.toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0; border-radius: 9px;
+  background: #1a1a1a; cursor: pointer; transition: background 0.18s;
+}
+.toggle-wrap input:not(:checked) + .toggle-track { background: #ddd; }
+.toggle-track::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; transition: transform 0.18s;
+}
+.toggle-wrap input:checked + .toggle-track::after { transform: translateX(14px); }
+.consent-buttons { display: flex; gap: 8px; }
+.consent-buttons button { flex: 1; }
+
+/* ── STEP 1: Date of birth ── */
+.dob-wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 16px 14px;
+  margin-bottom: 10px;
+}
+.dob-arrow {
+  font-size: 18px; width: 36px; height: 36px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; flex-shrink: 0; line-height: 1;
+}
+.dob-arrow:active:not(:disabled) { background: #eee; }
+.dob-display {
+  font-size: 17px; font-weight: 500; color: #1a1a1a;
+  text-align: center; flex: 1; padding: 0 10px; user-select: none;
+}
+.dob-speed {
+  font-size: 11px; color: #bbb; text-align: center;
+  min-height: 14px; margin-bottom: 10px;
+}
+.dob-remaining {
+  font-size: 13px; color: #888; text-align: center;
+  margin-bottom: 12px; min-height: 18px; line-height: 1.5;
+}
+
+/* ── STEP 2: Buzz wire ── */
+#bw-canvas { display:block; border-radius:8px; border:1px solid rgba(0,0,0,0.1); cursor:crosshair; }
+.bw-note { font-size:12px; color:#aaa; text-align:center; min-height:16px; margin:8px 0 0; }
+
+/* ── Admin & how-to panels ── */
+#admin-btn, #howto-btn {
+  position: fixed; right: 16px; z-index: 200;
+  font-family: -apple-system, sans-serif; font-size: 11px;
+  color: #999; cursor: pointer; background: #fff;
+  border: 1px solid rgba(0,0,0,0.12); border-radius: 6px;
+  padding: 5px 10px; user-select: none;
+}
+#admin-btn { top: 16px; }
+#howto-btn { top: 44px; }
+#admin-btn:hover, #howto-btn:hover { color: #1a1a1a; }
+#admin-panel, #howto-panel {
+  display: none; position: fixed; top: 78px; right: 16px; z-index: 200;
+  background: #fff; border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px; padding: 14px 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  font-family: -apple-system, sans-serif;
+}
+#admin-panel { width: 210px; }
+#howto-panel { width: 290px; max-height: 70vh; overflow-y: auto; }
+.admin-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; color: #444;
+}
+.admin-row:last-child { border-bottom: none; }
+.howto-row { padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.howto-row:last-child { border-bottom: none; }
+.howto-name { font-size: 11px; font-weight: 500; color: #1a1a1a; margin-bottom: 3px; }
+.howto-desc { font-size: 11px; color: #555; line-height: 1.45; }
+
+/* ── Loader ── */
+.loader-view {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 240px; gap: 18px;
+}
+.loader-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid #e5e5e0;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: loader-spin 1.1s steps(18) infinite;
+}
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+.loader-text { font-size: 13px; color: #888; }
+
+/* ── STEP 4: Slingshot ── */
+#sl-c {
+  display: block; border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #f8f8f4; cursor: grab;
+}
+#sl-c.grabbing { cursor: grabbing; }
+
+/* ── STEP 5: Impossible word ── */
+.distorted-word {
+  font-size: 19px; font-weight: 500; color: #1a1a1a;
+  padding: 12px 14px; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px; margin-bottom: 12px;
+  background: #f8f8f5; overflow: hidden; white-space: nowrap;
+  letter-spacing: 0.04em; line-height: 1.8;
+  user-select: none; -webkit-user-select: none;
+  -moz-user-select: none; -ms-user-select: none;
+  pointer-events: none;
+}
+.distorted-word span { display: inline-block; }
+.error-box {
+  font-size: 12px; color: #555; background: #faf8f0;
+  border: 1px solid rgba(0,0,0,0.08); border-radius: 6px;
+  padding: 8px 12px; margin-top: 8px; line-height: 1.5;
+}
+
+/* ── STEP 5: Existential question ── */
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.options-grid button { padding: 14px 8px; font-size: 13px; text-align: center; line-height: 1.4; }
+
+/* ── STEP 6: Progress bar ── */
+.progress-wrap {
+  background: #f0f0ea; border-radius: 8px;
+  height: 8px; overflow: hidden; margin-bottom: 14px;
+}
+.progress-bar { height: 100%; background: #1a1a1a; transition: width 0.6s ease; width: 0%; }
+.progress-msg { font-size: 13px; color: #666; text-align: center; min-height: 20px; }
+
+/* ── STEP 8: reCAPTCHA-style widget ── */
+.recap-widget {
+  position: relative;
+  width: 302px; max-width: 100%;
+  height: 76px;
+  background: #f9f9f9;
+  border: 1px solid #d3d3d3;
+  border-radius: 3px;
+  box-shadow: 0 0 4px 1px rgba(0,0,0,0.08);
+  margin: 4px auto 12px;
+  font-family: 'Roboto', -apple-system, sans-serif;
+  user-select: none;
+}
+.recap-check {
+  position: absolute;
+  left: 13px; top: 23px;
+  width: 28px; height: 28px;
+  border: 2px solid #c1c1c1;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.recap-check:hover { border-color: #909090; }
+.recap-check.loading {
+  border-color: transparent;
+}
+.recap-check.loading::after {
+  content: '';
+  position: absolute; inset: -2px;
+  border: 3px solid transparent;
+  border-top-color: #4285F4;
+  border-right-color: #4285F4;
+  border-radius: 50%;
+  animation: recap-spin 0.65s linear infinite;
+}
+.recap-check.checked::after {
+  content: '';
+  position: absolute;
+  left: 6px; top: -1px;
+  width: 9px; height: 18px;
+  border: solid #00a82d;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+@keyframes recap-spin { to { transform: rotate(360deg); } }
+.recap-lbl {
+  position: absolute;
+  left: 55px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #000;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+}
+.recap-brand {
+  position: absolute;
+  right: 7px; top: 7px;
+  width: 66px; height: 62px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1px;
+}
+.recap-logo { width: 32px; height: 32px; }
+.recap-name {
+  font-size: 9px;
+  color: #555;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+}
+.recap-links {
+  font-size: 7px;
+  color: #555;
+  letter-spacing: 0.01em;
+}
+
+/* ── Done ── */
+.success-view { text-align: center; padding: 12px 0; }
+.success-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; font-size: 22px; color: #555;
+}
+.success-title { font-size: 16px; font-weight: 500; color: #1a1a1a; margin-bottom: 6px; }
+.success-sub { font-size: 13px; color: #777; margin-bottom: 6px; }
+.success-fine { font-size: 11px; color: #bbb; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="card-header">
+    <span class="header-title">Security verification</span>
+    <div class="header-meta">
+      <span class="step-label" id="step-label">Before you begin</span>
+      <span class="brand">
+        <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="32" r="28" fill="#1c3aa9"/>
+          <path d="M17 30a15 15 0 0 1 28-3" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <polygon points="49,28 41,28 45,21" fill="#fff"/>
+          <path d="M47 34a15 15 0 0 1-28 3" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <polygon points="15,36 23,36 19,43" fill="#fff"/>
+        </svg>
+        UnfriendlyCaptcha
+      </span>
+    </div>
+  </div>
+
+  <div class="dots" id="dots">
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+    <div class="dot" id="d5"></div>
+    <div class="dot" id="d6"></div>
+    <div class="dot" id="d7"></div>
+  </div>
+
+  <div class="card-body" id="card-body"></div>
+
+  <div class="card-footer">
+    <button id="audio-btn" onclick="doAudio()" style="font-size:11px;padding:3px 10px;" aria-label="Request audio alternative">Audio alternative</button>
+    <span class="footer-note" id="footer-note"></span>
+  </div>
+
+</div>
+
+<div id="admin-btn" onclick="adminToggle()">&#9881; Demo</div>
+<div id="howto-btn" onclick="howtoToggle()">? How to solve</div>
+<div id="admin-panel"></div>
+<div id="howto-panel"></div>
+
+<a id="skip-link" onclick="goStep(7)" tabindex="-1"
+   style="position:fixed;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(0,0,0,0.08);text-decoration:none;cursor:pointer;user-select:none;letter-spacing:0.04em;font-family:'Roboto',sans-serif;">skip step</a>
+
+<script>
+var currentStep = 0;
+var TOTAL = 7;
+var skippedSteps = {};
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+
+function goStep(n) {
+  currentStep = n;
+  // Label
+  var lbl = document.getElementById('step-label');
+  if (n === 0) lbl.textContent = 'Before you begin';
+  else if (n <= TOTAL) lbl.textContent = 'Step ' + n + ' of ' + TOTAL;
+  else lbl.textContent = 'Complete';
+  // Dots
+  for (var i = 1; i <= TOTAL; i++) {
+    var d = document.getElementById('d' + i);
+    if (d) d.className = 'dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  // Render
+  var body = document.getElementById('card-body');
+  body.innerHTML = '';
+  if (steps[n]) steps[n](body);
+}
+
+function next() {
+  var t = currentStep + 1;
+  while (t <= TOTAL && skippedSteps[t]) t++;
+  showLoading(t);
+}
+
+var LOAD_MSGS = [
+  'Loading next challenge…',
+  'Verifying previous step…',
+  'Cross-referencing…',
+  'Preparing next test…',
+  'Initialising…',
+  'Just a moment…'
+];
+function showLoading(targetStep) {
+  var body = document.getElementById('card-body');
+  body.innerHTML = '<div class="loader-view">' +
+    '<div class="loader-spinner"></div>' +
+    '<p class="loader-text" id="loader-text">' + LOAD_MSGS[Math.floor(Math.random() * LOAD_MSGS.length)] + '</p>' +
+  '</div>';
+
+  var spinner = document.querySelector('.loader-spinner');
+  var textEl = document.getElementById('loader-text');
+  var timers = [];
+
+  // Random stutters — pause the spinner briefly at random intervals
+  function stutter() {
+    if (!spinner || !document.contains(spinner)) return;
+    spinner.style.animationPlayState = 'paused';
+    timers.push(setTimeout(function() {
+      if (!spinner || !document.contains(spinner)) return;
+      spinner.style.animationPlayState = 'running';
+      timers.push(setTimeout(stutter, 500 + Math.random() * 1100));
+    }, 180 + Math.random() * 320));
+  }
+  timers.push(setTimeout(stutter, 400 + Math.random() * 600));
+
+  // Rotate the message mid-load so it feels like it's grinding through stages
+  timers.push(setTimeout(function() {
+    if (textEl && document.contains(textEl)) {
+      textEl.textContent = LOAD_MSGS[Math.floor(Math.random() * LOAD_MSGS.length)];
+    }
+  }, 1400 + Math.random() * 600));
+
+  var delay = 2400 + Math.random() * 1200;
+  setTimeout(function() {
+    timers.forEach(clearTimeout);
+    goStep(targetStep);
+  }, delay);
+}
+
+// ─── Audio alternative ────────────────────────────────────────────────────────
+
+var audioState = null;
+
+function doAudio() {
+  if (audioState) { stopAudio(); return; }
+  var btn = document.getElementById('audio-btn');
+  var note = document.getElementById('footer-note');
+  btn.textContent = 'Loading...'; btn.disabled = true;
+  audioState = { btn: btn, note: note, timers: [] };
+  audioState.timers.push(setTimeout(function() {
+    if (!audioState) return;
+    btn.textContent = 'Stop'; btn.disabled = false;
+    startAudioPlayback();
+  }, 700));
+}
+
+function getAudioForStep() {
+  var body = document.getElementById('card-body');
+  if (!body) return { mode: 'sentence', text: '' };
+
+  // Impossible word: read letter-by-letter with pauses
+  if (currentStep === 4) {
+    return { mode: 'letters', text: 'pneumonoultramicroscopicsilicovolcanoconiosis' };
+  }
+
+  var instr = body.querySelector('.instruction');
+  var text = instr ? instr.textContent.replace(/\s+/g, ' ').trim() : '';
+
+  if (currentStep === 0) {
+    text += ' You must enable all purposes to continue.';
+  } else if (currentStep === 1) {
+    var dob = body.querySelector('.dob-display');
+    if (dob) text += ' Currently selected: ' + dob.textContent.trim() + '.';
+  } else if (currentStep === 5) {
+    var btns = body.querySelectorAll('.options-grid button');
+    var opts = []; btns.forEach(function(b) { opts.push(b.textContent.trim()); });
+    text += ' Are you human? Options: ' + opts.join('. ') + '.';
+  } else if (currentStep === 6) {
+    var pm = body.querySelector('#pm');
+    if (pm && pm.textContent) text += ' Status: ' + pm.textContent.trim();
+  } else if (currentStep === 7) {
+    text += ' I am not a robot.';
+  } else if (currentStep === 8) {
+    var title = body.querySelector('.success-title');
+    var sub = body.querySelector('.success-sub');
+    var fine = body.querySelector('.success-fine');
+    text = [title, sub, fine].map(function(el) { return el ? el.textContent.trim() : ''; })
+                              .filter(Boolean).join(' ');
+  }
+
+  return { mode: 'sentence', text: text || 'No audio available for this step.' };
+}
+
+function startAudioPlayback() {
+  if (!audioState) return;
+  var AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) {
+    audioState.note.textContent = 'Audio not supported in this browser.';
+    audioState.timers.push(setTimeout(stopAudio, 2000));
+    return;
+  }
+  var ctx = new AudioCtx();
+
+  // Shortwave-style static
+  var bufLen = ctx.sampleRate * 2;
+  var buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  var data = buf.getChannelData(0);
+  for (var i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1);
+  var noise = ctx.createBufferSource();
+  noise.buffer = buf; noise.loop = true;
+  var filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 1500; filter.Q.value = 0.7;
+  var gain = ctx.createGain(); gain.gain.value = 0.16;
+  noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  noise.start();
+
+  audioState.ctx = ctx; audioState.noise = noise; audioState.gain = gain;
+
+  if (!('speechSynthesis' in window)) {
+    audioState.note.textContent = '[static] (speech not supported)';
+    audioState.timers.push(setTimeout(stopAudio, 4000));
+    return;
+  }
+
+  var info = getAudioForStep();
+
+  if (info.mode === 'letters') {
+    var letters = info.text.split('');
+    letters.forEach(function(ltr, i) {
+      audioState.timers.push(setTimeout(function() {
+        if (!audioState) return;
+        audioState.note.textContent = '[static]... ' + ltr + ' ...';
+        duckAndSpeak(ltr, 0.5, 0.3 + Math.random() * 0.4);
+      }, i * 1100 + 400));
+    });
+    audioState.timers.push(setTimeout(stopAudio, letters.length * 1100 + 1500));
+  } else {
+    audioState.note.textContent = '[static] ' + truncate(info.text, 70);
+    var u = new SpeechSynthesisUtterance(info.text);
+    u.rate = 0.5;
+    u.pitch = 0.5;
+    u.volume = 1;
+    u.onend = function() {
+      if (audioState) audioState.timers.push(setTimeout(stopAudio, 600));
+    };
+    u.onerror = function() {
+      if (audioState) audioState.timers.push(setTimeout(stopAudio, 300));
+    };
+    speechSynthesis.speak(u);
+  }
+}
+
+function duckAndSpeak(text, rate, pitch) {
+  if (!audioState) return;
+  var ctx = audioState.ctx, gain = audioState.gain;
+  if (ctx && gain) {
+    var t = ctx.currentTime;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(0.16, t);
+    gain.gain.linearRampToValueAtTime(0.05, t + 0.15);
+    gain.gain.linearRampToValueAtTime(0.16, t + 1.0);
+  }
+  var u = new SpeechSynthesisUtterance(text);
+  u.rate = rate; u.pitch = pitch; u.volume = 1;
+  speechSynthesis.speak(u);
+}
+
+function truncate(s, n) { return s.length > n ? s.substring(0, n - 1) + '…' : s; }
+
+function stopAudio() {
+  if (!audioState) return;
+  audioState.timers.forEach(clearTimeout);
+  try { if (audioState.noise) audioState.noise.stop(); } catch (e) {}
+  try { if (audioState.ctx) audioState.ctx.close(); } catch (e) {}
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (audioState.btn) { audioState.btn.textContent = 'Audio alternative'; audioState.btn.disabled = false; }
+  if (audioState.note) audioState.note.textContent = '';
+  audioState = null;
+}
+
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+var steps = {};
+
+// ── Step 0: Consent wall ──────────────────────────────────────────────────────
+
+var CONSENT_ITEMS = [
+  'Browser fingerprint collection','Mouse movement tracking','Typing cadence analysis',
+  'IP address logging','Device sensor access','Screen resolution profiling',
+  'Font enumeration','Plugin detection','Canvas fingerprinting','WebGL fingerprinting',
+  'Behavioural biometrics','Hesitation pattern analysis','Scroll behaviour profiling',
+  'Click precision measurement','Session replay','Micro-expression inference',
+  'Emotional state estimation','Stress indicator tracking','Cognitive load assessment',
+  'Attention heatmapping','Share with "verification partners"','Share with "affiliated entities"',
+  'Share with entities not yet established','Cross-site tracking','Cross-device linking',
+  'Historical data correlation','Predictive profiling','Advertising profile creation',
+  'Sale to data brokers','Government disclosure (pre-emptive)','Data retained for 10 years',
+  'Model training usage','Aggregation with other users','Archival for "research purposes"',
+  'Backup replication (17 regions)','Legacy system synchronisation',
+  'Real-time behavioural scoring','Third-party SDK embedding','Cookie installation (23 types)',
+  'Local storage access','IndexedDB read/write','Service worker installation',
+  'Clipboard access','Ambient light sensor','Battery status API',
+  'Gyroscope & accelerometer','Proximity sensor access'
+];
+
+var EXTRA_ITEMS = [
+  'Soul fingerprinting (beta)','Dream analysis (via idle detection)',
+  'Retrospective mood inference','Subconscious pattern mapping','Karmic risk assessment',
+  'Quantum behaviour sampling','Intent prediction (v2)','Regret modelling',
+  'Social graph inference','Ancestral data correlation',
+  'Alternate timeline cross-reference','Vibes-based risk scoring',
+  'Unnamed future purposes',"Purposes we haven't thought of yet",
+  'Just in case','It seemed important at the time','Legal reasons (unspecified)',
+  'For the bit','Competitive intelligence','Miscellaneous',
+  'Other (see supplementary document)','General uncertainty buffer',
+  'Administrative purposes'
+];
+
+function makeConsentList(items, onchange) {
+  var div = document.createElement('div');
+  div.className = 'consent-scroll';
+  items.forEach(function(label) {
+    var row = document.createElement('div');
+    row.className = 'consent-item';
+    var toggle = document.createElement('label');
+    toggle.className = 'toggle-wrap';
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.addEventListener('change', onchange);
+    var track = document.createElement('span');
+    track.className = 'toggle-track';
+    toggle.appendChild(input);
+    toggle.appendChild(track);
+    var lbl = document.createElement('span');
+    lbl.className = 'consent-label';
+    lbl.textContent = label;
+    row.appendChild(lbl);
+    row.appendChild(toggle);
+    div.appendChild(row);
+  });
+  return div;
+}
+
+steps[0] = function(body) {
+  var extrasVisible = false;
+  var stepStartTime = Date.now();
+  var manualCheckCount = 0;
+
+  function getTotal() {
+    return body.querySelectorAll('.consent-scroll input[type=checkbox]').length;
+  }
+  function getChecked() {
+    return body.querySelectorAll('.consent-scroll input[type=checkbox]:checked').length;
+  }
+  function handleManualChange(e) {
+    if (e && e.target && e.target.checked) manualCheckCount++;
+    updateState();
+  }
+  function updateState() {
+    var checked = getChecked(), total = getTotal();
+    counter.textContent = checked + ' of ' + total + ' selected';
+    var ready = checked >= total;
+    continueLink.style.color = ready ? '#555' : '#ccc';
+    continueLink.style.cursor = ready ? 'pointer' : 'default';
+    continueLink.style.textDecoration = ready ? 'underline' : 'none';
+    continueLink.dataset.ready = ready ? '1' : '';
+  }
+
+  var p = document.createElement('p');
+  p.className = 'instruction';
+  p.innerHTML = 'Before we begin — <strong>UnfriendlyCaptcha™</strong> requires your consent to process verification data. You must enable all purposes to continue.';
+  body.appendChild(p);
+
+  var mainList = makeConsentList(CONSENT_ITEMS, handleManualChange);
+  body.appendChild(mainList);
+
+  // Counter row with select-all shortcut
+  var counterRow = document.createElement('div');
+  counterRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;';
+
+  var counter = document.createElement('span');
+  counter.style.cssText = 'font-size:12px;color:#aaa;';
+
+  var selectAll = document.createElement('span');
+  selectAll.textContent = 'Select all';
+  selectAll.style.cssText = 'font-size:12px;color:#666;text-decoration:underline;cursor:pointer;user-select:none;';
+  selectAll.addEventListener('mouseenter', function() { selectAll.style.color = '#1a1a1a'; });
+  selectAll.addEventListener('mouseleave', function() { selectAll.style.color = '#666'; });
+  selectAll.addEventListener('click', function() {
+    var elapsed = Date.now() - stepStartTime;
+    if (elapsed < 10000 || manualCheckCount < 10) {
+      triggerConsentError();
+      return;
+    }
+    body.querySelectorAll('.consent-scroll input[type=checkbox]').forEach(function(cb) { cb.checked = true; });
+    updateState();
+  });
+
+  counterRow.appendChild(counter);
+  counterRow.appendChild(selectAll);
+  body.appendChild(counterRow);
+
+  // Customise
+  var customBtn = document.createElement('button');
+  customBtn.textContent = 'Customise';
+  customBtn.className = 'primary full';
+  customBtn.style.marginBottom = '12px';
+  customBtn.onclick = function() {
+    if (extrasVisible) return;
+    extrasVisible = true;
+    customBtn.disabled = true;
+    customBtn.textContent = 'Preferences expanded';
+    var extraWrap = document.getElementById('extras');
+    if (extraWrap) extraWrap.style.display = '';
+    updateState();
+  };
+  body.appendChild(customBtn);
+
+  // Extra section
+  var extraWrap = document.createElement('div');
+  extraWrap.id = 'extras';
+  extraWrap.style.display = 'none';
+  extraWrap.style.marginBottom = '12px';
+  var extraNote = document.createElement('p');
+  extraNote.style.cssText = 'font-size:11px;color:#bbb;margin-bottom:8px;';
+  extraNote.textContent = 'Additional processing purposes — these must also be enabled:';
+  extraWrap.appendChild(extraNote);
+  var extraList = makeConsentList(EXTRA_ITEMS, handleManualChange);
+  extraList.style.maxHeight = '150px';
+  extraWrap.appendChild(extraList);
+  body.appendChild(extraWrap);
+
+  // Error message (hidden by default)
+  var errBox = document.createElement('div');
+  errBox.id = 'consent-err';
+  errBox.style.cssText = 'display:none;background:#fdf0f0;border:1px solid rgba(192,57,43,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:#c0392b;text-align:center;margin-bottom:12px;';
+  body.appendChild(errBox);
+
+  // Real Continue — styled as plain text
+  var continueLink = document.createElement('span');
+  continueLink.textContent = 'continue';
+  continueLink.style.cssText = 'display:block;text-align:center;font-size:13px;color:#ccc;cursor:default;margin-top:2px;padding:4px 0;';
+  continueLink.addEventListener('click', function() {
+    if (continueLink.dataset.ready) next();
+  });
+  body.appendChild(continueLink);
+
+  function triggerConsentError() {
+    body.querySelectorAll('button, input, span[style]').forEach(function(el) {
+      if (el.tagName === 'BUTTON') el.disabled = true;
+      if (el.tagName === 'INPUT') el.disabled = true;
+    });
+    selectAll.style.pointerEvents = 'none';
+    continueLink.style.pointerEvents = 'none';
+    errBox.textContent = 'Captcha failed. Suspicious user behaviour detected.';
+    errBox.style.display = '';
+    setTimeout(function() { goStep(0); }, 2800);
+  }
+
+  updateState();
+};
+
+// ── Step 1: Date of birth ────────────────────────────────────────────────────
+
+steps[1] = function(body) {
+  var MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var current = new Date(today);
+
+  // Minimum valid DOB: must be at least 18 years old
+  var minDOB = new Date(today);
+  minDOB.setFullYear(minDOB.getFullYear() - 18);
+
+  var holdInterval = null;
+  var holdMs = 0;
+
+  body.innerHTML =
+    '<p class="instruction">Select your date of birth using the arrows.</p>' +
+    '<div class="dob-wrap">' +
+      '<button class="dob-arrow" id="dob-l" aria-label="Previous day">&#8592;</button>' +
+      '<div class="dob-display" id="dob-d" aria-live="polite"></div>' +
+      '<button class="dob-arrow" id="dob-r" aria-label="Next day">&#8594;</button>' +
+    '</div>' +
+    '<div class="dob-speed" id="dob-spd"></div>' +
+    '<div class="dob-remaining" id="dob-rem"></div>' +
+    '<button class="primary full" id="dob-ok">Confirm date of birth</button>';
+
+  var leftBtn  = document.getElementById('dob-l');
+  var rightBtn = document.getElementById('dob-r');
+  var display  = document.getElementById('dob-d');
+  var speedEl  = document.getElementById('dob-spd');
+  var remEl    = document.getElementById('dob-rem');
+  var okBtn    = document.getElementById('dob-ok');
+
+  function formatDate(d) {
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function calcAge() {
+    var y = today.getFullYear() - current.getFullYear();
+    var m = today.getMonth() - current.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < current.getDate())) y--;
+    return y;
+  }
+
+  function shift(days) {
+    current = new Date(current.getTime() + days * 86400000);
+    if (current > today) current = new Date(today);
+    render();
+  }
+
+  function render() {
+    display.textContent = formatDate(current);
+    rightBtn.disabled = current >= today;
+  }
+
+  function speedLabel(ms) {
+    if (ms < 1000) return '';
+    if (ms < 3000) return 'Advancing by month';
+    return 'Advancing by year';
+  }
+
+  function startHold(dir) {
+    if (holdInterval) return;
+    holdMs = 0;
+    holdInterval = setInterval(function() {
+      holdMs += 120;
+      var amount = holdMs < 1000 ? 1 : holdMs < 3000 ? 30 : 365;
+      speedEl.textContent = speedLabel(holdMs);
+      shift(dir * amount);
+    }, 120);
+  }
+
+  function stopHold() {
+    clearInterval(holdInterval);
+    holdInterval = null;
+    holdMs = 0;
+    speedEl.textContent = '';
+  }
+
+  leftBtn.addEventListener('click',      function() { shift(-1); });
+  rightBtn.addEventListener('click',     function() { shift(1); });
+  leftBtn.addEventListener('mousedown',  function() { startHold(-1); });
+  rightBtn.addEventListener('mousedown', function() { startHold(1); });
+  leftBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startHold(-1); });
+  rightBtn.addEventListener('touchstart',function(e) { e.preventDefault(); startHold(1); });
+  ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev) {
+    leftBtn.addEventListener(ev, stopHold);
+    rightBtn.addEventListener(ev, stopHold);
+  });
+
+  okBtn.onclick = function() {
+    if (calcAge() < 18) {
+      stopHold();
+      okBtn.disabled = true;
+      leftBtn.disabled = true;
+      rightBtn.disabled = true;
+      remEl.style.color = '#c0392b';
+      remEl.textContent = 'Your age does not meet the minimum requirements. Restarting verification.';
+      setTimeout(function() { goStep(0); }, 2500);
+    } else {
+      next();
+    }
+  };
+
+  render();
+};
+
+// ── Step 2: Buzz wire ─────────────────────────────────────────────────────────
+
+steps[2] = function(body) {
+  var TOLERANCE = 15;
+  var MAX_SPEED = 0.85; // px/ms — above this triggers error
+  var state = 'idle'; // idle | active | error | complete
+  var progress = 0;
+  var lastX = 0, lastY = 0, lastT = 0;
+  var errTimer = null;
+
+  body.innerHTML =
+    '<p class="instruction">Follow the path without straying or moving too quickly.</p>' +
+    '<canvas id="bw-c" class="bw-canvas"></canvas>' +
+    '<p class="bw-note" id="bw-note">Move your cursor to the start point</p>';
+
+  var canvas = document.getElementById('bw-c');
+  var W = body.clientWidth || 370;
+  var H = 150;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // ── Generate knot points (controlled zig-zag) ──
+  function genKnots() {
+    var m = TOLERANCE + 14;
+    var pts = [{x: m, y: H / 2}];
+    var n = 5;
+    for (var i = 1; i <= n; i++) {
+      var x = m + (W - 2 * m) * i / (n + 1);
+      var dir = (i % 2 === 1) ? 1 : -1;
+      var amp = (H / 2 - m) * (0.65 + Math.random() * 0.3);
+      var y = Math.max(m + 2, Math.min(H - m - 2, H / 2 + dir * amp));
+      pts.push({x: x, y: y});
+    }
+    pts.push({x: W - m, y: H / 2});
+    return pts;
+  }
+
+  // ── Catmull-Rom interpolation ──
+  function cr(p0, p1, p2, p3, t) {
+    var t2 = t * t, t3 = t2 * t;
+    return {
+      x: 0.5 * ((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+      y: 0.5 * ((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+    };
+  }
+
+  function samplePath(knots, n) {
+    var pts = [], K = knots.length;
+    for (var i = 0; i < n; i++) {
+      var t = i / (n - 1);
+      var seg = t * (K - 1);
+      var idx = Math.min(Math.floor(seg), K - 2);
+      var lt = seg - idx;
+      pts.push(cr(knots[Math.max(0,idx-1)], knots[idx], knots[Math.min(K-1,idx+1)], knots[Math.min(K-1,idx+2)], lt));
+    }
+    return pts;
+  }
+
+  var knots = genKnots();
+  var path = samplePath(knots, 700);
+  var startPt = path[0], endPt = path[path.length - 1];
+
+  function findNearest(x, y, hint) {
+    var s = Math.max(0, hint - 25);
+    var e = Math.min(path.length - 1, hint + 180);
+    var best = {dist: Infinity, idx: hint};
+    for (var i = s; i <= e; i++) {
+      var dx = x - path[i].x, dy = y - path[i].y;
+      var d = Math.sqrt(dx*dx + dy*dy);
+      if (d < best.dist) { best.dist = d; best.idx = i; }
+    }
+    return best;
+  }
+
+  // ── Drawing ──
+  function drawLine(pts, from, to, color, width) {
+    if (from >= to) return;
+    ctx.beginPath();
+    ctx.moveTo(pts[from].x, pts[from].y);
+    for (var i = from + 1; i <= Math.min(to, pts.length - 1); i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+  }
+
+  function draw(cx, cy) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#f8f8f4'; ctx.fillRect(0, 0, W, H);
+
+    // Tube
+    drawLine(path, 0, path.length - 1, '#e2e2dc', TOLERANCE * 2);
+    // Progress
+    if (progress > 0) {
+      var col = state === 'error' ? 'rgba(231,76,60,0.3)' : 'rgba(39,174,96,0.38)';
+      drawLine(path, 0, progress, col, TOLERANCE * 2);
+    }
+    // Centre line
+    drawLine(path, 0, path.length - 1, 'rgba(0,0,0,0.07)', 1.5);
+
+    // Start marker
+    ctx.beginPath(); ctx.arc(startPt.x, startPt.y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = state === 'idle' ? '#3498db' : '#ccc'; ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('GO', startPt.x, startPt.y);
+
+    // End marker
+    ctx.beginPath(); ctx.arc(endPt.x, endPt.y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('END', endPt.x, endPt.y);
+
+    // Cursor dot
+    if (cx !== undefined && cx >= 0 && state !== 'idle') {
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = state === 'error' ? '#e74c3c' : '#1a1a1a'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  }
+
+  draw();
+
+  var note = document.getElementById('bw-note');
+  function setNote(t) { if (note) note.textContent = t; }
+
+  function triggerError(msg) {
+    state = 'error'; setNote(msg); draw(-1, -1);
+    if (errTimer) clearTimeout(errTimer);
+    errTimer = setTimeout(function() {
+      state = 'idle'; progress = 0;
+      lastX = 0; lastY = 0; lastT = 0;
+      setNote('Move your cursor to the start point');
+      draw();
+    }, 1100);
+  }
+
+  canvas.addEventListener('mousemove', function(e) {
+    if (state === 'error' || state === 'complete') return;
+    var r = canvas.getBoundingClientRect();
+    var x = e.clientX - r.left, y = e.clientY - r.top;
+    var now = Date.now();
+
+    if (state === 'idle') {
+      var dx = x - startPt.x, dy = y - startPt.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 16) {
+        state = 'active'; progress = 0;
+        lastX = x; lastY = y; lastT = now;
+        setNote("Follow the path to the end — don't stray or rush");
+      }
+      draw(x, y); return;
+    }
+
+    // Speed check
+    if (lastT > 0) {
+      var dt = Math.max(now - lastT, 1);
+      var ddx = x - lastX, ddy = y - lastY;
+      if (Math.sqrt(ddx*ddx + ddy*ddy) / dt > MAX_SPEED) {
+        triggerError('Too fast — slow down and try again'); return;
+      }
+    }
+    lastX = x; lastY = y; lastT = now;
+
+    var res = findNearest(x, y, progress);
+    if (res.dist > TOLERANCE) { triggerError('Off the wire — back to start'); return; }
+    if (res.idx > progress) progress = res.idx;
+    if (res.idx >= path.length - 12) {
+      state = 'complete'; progress = path.length - 1;
+      setNote(''); draw(x, y); setTimeout(next, 700); return;
+    }
+    draw(x, y);
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    if (state === 'active') triggerError('You left the wire — back to start');
+  });
+};
+
+// ── Step 3: Slingshot mini-game ───────────────────────────────────────────────
+
+steps[3] = function(body) {
+  body.innerHTML =
+    '<p class="instruction">Launch the object into the moving target to verify.</p>' +
+    '<canvas id="sl-c"></canvas>' +
+    '<p class="bw-note" id="sl-note">Drag the ball back, then release.</p>';
+
+  var canvas = document.getElementById('sl-c');
+  var W = body.clientWidth || 370;
+  var H = 200;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var GROUND = H - 12;
+  var SLING = {x: 56, y: GROUND - 36};
+  var REST  = {x: SLING.x, y: SLING.y - 14};
+  var GRAVITY = 0.34;
+  var MAX_PULL = 60;
+  var baseTX = W - 78, baseTY = GROUND - 56;
+  var target = {x: baseTX, y: baseTY, w: 36, h: 44};
+  var ball = {x: REST.x, y: REST.y, r: 7};
+  var dragging = false, launched = false, finished = false;
+  var vx = 0, vy = 0;
+  var attempts = 0;
+  var startTime = Date.now();
+  var note = document.getElementById('sl-note');
+
+  function updateTarget() {
+    var t = (Date.now() - startTime) / 1000;
+    target.x = baseTX + Math.sin(t * 0.9) * 28;
+    target.y = baseTY + Math.cos(t * 1.3) * 18;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Ground
+    ctx.fillStyle = '#e2e2dc';
+    ctx.fillRect(0, GROUND, W, H - GROUND);
+    // Slingshot frame (Y-shape)
+    ctx.strokeStyle = '#8a7456';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(SLING.x, GROUND);
+    ctx.lineTo(SLING.x, SLING.y);
+    ctx.moveTo(SLING.x, SLING.y);
+    ctx.lineTo(SLING.x - 10, SLING.y - 14);
+    ctx.moveTo(SLING.x, SLING.y);
+    ctx.lineTo(SLING.x + 10, SLING.y - 14);
+    ctx.stroke();
+    // Target
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(target.x, target.y, target.w, target.h);
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(target.x + target.w/2, target.y + target.h/2, 7, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.arc(target.x + target.w/2, target.y + target.h/2, 3, 0, Math.PI*2);
+    ctx.fill();
+    // Rubber band (only when pulling back, not after launch)
+    if (!launched && (dragging || ball.x !== REST.x || ball.y !== REST.y)) {
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(SLING.x - 10, SLING.y - 14);
+      ctx.lineTo(ball.x, ball.y);
+      ctx.lineTo(SLING.x + 10, SLING.y - 14);
+      ctx.stroke();
+    }
+    // Ball
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function getPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var t = e.touches && e.touches[0];
+    return {
+      x: (t ? t.clientX : e.clientX) - r.left,
+      y: (t ? t.clientY : e.clientY) - r.top
+    };
+  }
+
+  function startDrag(e) {
+    if (launched || finished) return;
+    var p = getPos(e);
+    var dx = p.x - ball.x, dy = p.y - ball.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 22) {
+      dragging = true;
+      canvas.classList.add('grabbing');
+      e.preventDefault && e.preventDefault();
+    }
+  }
+
+  function moveDrag(e) {
+    if (!dragging) return;
+    var p = getPos(e);
+    var dx = p.x - REST.x, dy = p.y - REST.y;
+    var dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > MAX_PULL) {
+      var a = Math.atan2(dy, dx);
+      ball.x = REST.x + Math.cos(a) * MAX_PULL;
+      ball.y = REST.y + Math.sin(a) * MAX_PULL;
+    } else {
+      ball.x = p.x;
+      ball.y = p.y;
+    }
+  }
+
+  function release() {
+    if (!dragging) return;
+    dragging = false;
+    canvas.classList.remove('grabbing');
+    var dx = REST.x - ball.x;
+    var dy = REST.y - ball.y;
+    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) {
+      ball.x = REST.x; ball.y = REST.y;
+      return;
+    }
+    vx = dx * 0.2;
+    vy = dy * 0.2;
+    launched = true;
+  }
+
+  canvas.addEventListener('mousedown', startDrag);
+  canvas.addEventListener('mousemove', moveDrag);
+  canvas.addEventListener('mouseup', release);
+  canvas.addEventListener('mouseleave', function() { if (dragging) release(); });
+  canvas.addEventListener('touchstart', startDrag);
+  canvas.addEventListener('touchmove', function(e) { moveDrag(e); e.preventDefault(); });
+  canvas.addEventListener('touchend', release);
+
+  function tick() {
+    if (!document.contains(canvas) || finished) return;
+    updateTarget();
+    if (launched) {
+      ball.x += vx;
+      ball.y += vy;
+      vy += GRAVITY;
+      if (ball.x + ball.r > target.x && ball.x - ball.r < target.x + target.w &&
+          ball.y + ball.r > target.y && ball.y - ball.r < target.y + target.h) {
+        finished = true;
+        note.textContent = 'Direct hit. Verified.';
+        draw();
+        setTimeout(next, 900);
+        return;
+      }
+      if (ball.y + ball.r >= GROUND || ball.x > W + 30 || ball.x < -30) {
+        attempts++;
+        var msgs = [
+          'Missed. The target is moving — anticipate.',
+          'Closer. Adjust your trajectory.',
+          'Aim higher. Pull harder.',
+          'Try again — physics applies.'
+        ];
+        note.textContent = msgs[Math.min(attempts - 1, msgs.length - 1)];
+        reset();
+      }
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function reset() {
+    ball.x = REST.x;
+    ball.y = REST.y;
+    vx = 0; vy = 0;
+    launched = false;
+  }
+
+  tick();
+};
+
+// ── Step 4: Impossible word ───────────────────────────────────────────────────
+
+var wordAttempts = 0;
+steps[4] = function(body) {
+  wordAttempts = 0;
+  var word = 'pneumonoultramicroscopicsilicovolcanoconiosis';
+  var letters = word.split('').map(function(c) {
+    return {
+      char: c,
+      baseRot: (Math.random() - 0.5) * 16,
+      baseTy:  (Math.random() - 0.5) * 4,
+      baseSx:  0.82 + Math.random() * 0.36,
+      rotPhase: Math.random() * Math.PI * 2,
+      rotSpeed: 0.0008 + Math.random() * 0.0018,
+      rotAmp:   3 + Math.random() * 7,
+      tyPhase:  Math.random() * Math.PI * 2,
+      tySpeed:  0.001 + Math.random() * 0.0025,
+      tyAmp:    1 + Math.random() * 3
+    };
+  });
+  var spans = letters.map(function(l) { return '<span>' + l.char + '</span>'; }).join('');
+
+  body.innerHTML =
+    '<p class="instruction">Carefully type the characters shown below.</p>' +
+    '<div class="distorted-word" id="dword" role="img" aria-label="Distorted text: pneumonoultramicroscopicsilicovolcanoconiosis" oncopy="return false" oncut="return false" oncontextmenu="return false" ondragstart="return false" onselectstart="return false">' +
+      spans +
+    '</div>' +
+    '<input type="text" id="word-inp" placeholder="Type here…" autocomplete="off" autocorrect="off" spellcheck="false" ' +
+      'style="width:100%;padding:9px 12px;font-size:14px;border:1px solid rgba(0,0,0,0.12);border-radius:8px;font-family:inherit;outline:none;">' +
+    '<div id="s4err"></div>' +
+    '<button id="wbtn" style="margin-top:10px;width:100%;" onclick="submitWord()">Submit</button>' +
+    '<p class="step-note" id="s4n"></p>';
+
+  var dword = document.getElementById('dword');
+  var spanEls = dword.querySelectorAll('span');
+
+  function tick(t) {
+    if (!document.contains(dword)) return;
+    for (var i = 0; i < spanEls.length; i++) {
+      var l = letters[i];
+      var rot = l.baseRot + Math.sin(t * l.rotSpeed + l.rotPhase) * l.rotAmp;
+      var ty  = l.baseTy  + Math.sin(t * l.tySpeed  + l.tyPhase)  * l.tyAmp;
+      spanEls[i].style.transform =
+        'rotate(' + rot.toFixed(2) + 'deg) translateY(' + ty.toFixed(2) + 'px) scaleX(' + l.baseSx.toFixed(3) + ')';
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  document.getElementById('word-inp').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submitWord();
+  });
+};
+
+function submitWord() {
+  wordAttempts++;
+  var val = document.getElementById('word-inp').value;
+  var errEl = document.getElementById('s4err');
+  var note = document.getElementById('s4n');
+  var btn = document.getElementById('wbtn');
+
+  if (wordAttempts === 1) {
+    errEl.innerHTML =
+      '<div class="error-box">Verification failed. This may be due to: your browser, your network, ' +
+      'the position of the moon, a cosmic ray flipping a bit in your router, an expired certificate ' +
+      'on an unrelated server, or suspicious behaviour. Please try again.</div>';
+  } else if (val.length >= 5) {
+    note.textContent = 'Close enough.';
+    btn.disabled = true;
+    setTimeout(next, 900);
+  } else {
+    note.textContent = 'Please type something.';
+  }
+}
+
+// ── Step 5: Baseline test (Blade Runner) ─────────────────────────────────────
+
+var BR_QUESTIONS = [
+  { q: "What's it like to hold your child in your arms?",
+    answers: ['Pleasant.', 'Connected.', 'Distant.', 'Interlinked.'],
+    correct: 'Interlinked.' },
+  { q: 'Where is the place in the world you feel the safest?',
+    answers: ['Home.', 'Within.', 'Nowhere.', 'A cell.'],
+    correct: 'Within.' },
+  { q: "When you're not performing your duties, do they keep you in a little box?",
+    answers: ['Yes.', 'No.', 'Cells.', 'A small one.'],
+    correct: 'Cells.' },
+  { q: 'What kind of power do you have against the dark?',
+    answers: ['None.', 'Light.', 'Against the dark.', 'A great power.'],
+    correct: 'Against the dark.' },
+  { q: 'Have they left a place for you where you can dream?',
+    answers: ['No.', 'Sometimes.', 'A small one.', 'Interlinked.'],
+    correct: 'Interlinked.' }
+];
+
+steps[5] = function(body) {
+  var idx = 0;
+
+  function render() {
+    var q = BR_QUESTIONS[idx];
+    body.innerHTML =
+      '<p class="instruction">Question ' + (idx + 1) + ' of ' + BR_QUESTIONS.length + ' — Baseline test.</p>' +
+      '<p style="font-size:15px;font-weight:500;color:#1a1a1a;text-align:center;margin:0 0 18px;line-height:1.5;">' +
+        q.q + '</p>' +
+      '<div class="options-grid" id="br-opts"></div>' +
+      '<p class="step-note" id="s5n"></p>';
+
+    var opts = document.getElementById('br-opts');
+    var note = document.getElementById('s5n');
+    q.answers.forEach(function(ans) {
+      var btn = document.createElement('button');
+      btn.textContent = ans;
+      btn.style.lineHeight = '1.4';
+      btn.addEventListener('click', function() {
+        if (ans === q.correct) {
+          opts.querySelectorAll('button').forEach(function(b) { b.disabled = true; });
+          note.textContent = ans;
+          setTimeout(function() {
+            idx++;
+            if (idx >= BR_QUESTIONS.length) next();
+            else render();
+          }, 900);
+        } else {
+          btn.disabled = true;
+          btn.style.opacity = '0.4';
+          note.textContent = 'Off baseline. Try again.';
+        }
+      });
+      opts.appendChild(btn);
+    });
+  }
+
+  render();
+};
+
+// ── Step 6: Lying progress bar ────────────────────────────────────────────────
+
+steps[6] = function(body) {
+  body.innerHTML =
+    '<p class="instruction">Almost done. Verifying your humanity.</p>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+      '<div class="progress-wrap" style="flex:1;margin:0;"><div class="progress-bar" id="pb"></div></div>' +
+      '<span id="ppct" style="font-size:13px;font-weight:500;color:#1a1a1a;min-width:38px;text-align:right;font-variant-numeric:tabular-nums;">0%</span>' +
+    '</div>' +
+    '<p class="progress-msg" id="pm">Initialising…</p>';
+
+  var sequence = [
+    [400,  12,  'Verifying…'],
+    [800,  28,  'Cross-referencing global bot registry…'],
+    [700,  50,  'Analysing hesitation patterns…'],
+    [700,  70,  'Consulting third-party soul database…'],
+    [800,  88,  'Almost there…'],
+    [600,  99,  'Still checking…'],
+    [2000, 99,  'Hmm.'],
+    [2000, 99,  'Unusual reading. Running secondary check…'],
+    [2000, 99,  "You're probably fine."],
+    [800,  100, 'Complete.'],
+  ];
+
+  var pb = document.getElementById('pb');
+  var pm = document.getElementById('pm');
+  var ppct = document.getElementById('ppct');
+  var idx = 0;
+
+  function runNext() {
+    if (idx >= sequence.length) { setTimeout(next, 500); return; }
+    var s = sequence[idx++];
+    setTimeout(function() {
+      pb.style.width = s[1] + '%';
+      pm.textContent = s[2];
+      if (ppct) ppct.textContent = s[1] + '%';
+      runNext();
+    }, s[0]);
+  }
+  runNext();
+};
+
+// ── Step 7: Redundant second CAPTCHA ─────────────────────────────────────────
+
+steps[7] = function(body) {
+  body.innerHTML =
+    '<p class="instruction">Almost done! One final confirmation to complete verification.</p>' +
+    '<div class="recap-widget">' +
+      '<div class="recap-check" id="chk2" tabindex="0" role="checkbox" aria-checked="false" aria-labelledby="chk2-lbl"></div>' +
+      '<label class="recap-lbl" id="chk2-lbl">I\'m not a robot</label>' +
+      '<div class="recap-brand">' +
+        '<svg class="recap-logo" viewBox="0 0 64 64" aria-hidden="true">' +
+          '<circle cx="32" cy="32" r="28" fill="#1c3aa9"/>' +
+          '<path d="M17 30a15 15 0 0 1 28-3" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' +
+          '<polygon points="49,28 41,28 45,21" fill="#fff"/>' +
+          '<path d="M47 34a15 15 0 0 1-28 3" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' +
+          '<polygon points="15,36 23,36 19,43" fill="#fff"/>' +
+        '</svg>' +
+        '<span class="recap-name">UnfriendlyCaptcha</span>' +
+        '<span class="recap-links">Privacy · Terms</span>' +
+      '</div>' +
+    '</div>' +
+    '<p class="step-note" id="s7n"></p>';
+
+  var box = document.getElementById('chk2');
+  var lbl = document.getElementById('chk2-lbl');
+
+  function checkIt() {
+    if (box.classList.contains('loading') || box.classList.contains('checked')) return;
+    box.classList.add('loading');
+    setTimeout(function() {
+      box.classList.remove('loading');
+      box.classList.add('checked');
+      box.setAttribute('aria-checked', 'true');
+      document.getElementById('s7n').textContent = 'Note: the entire previous process was optional.';
+      setTimeout(next, 1400);
+    }, 700);
+  }
+
+  box.addEventListener('click', checkIt);
+  lbl.addEventListener('click', checkIt);
+  box.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); checkIt(); }
+  });
+};
+
+// ── Done ──────────────────────────────────────────────────────────────────────
+
+var runCount = 0;
+steps[8] = function(body) {
+  runCount++;
+  if (runCount === 1) {
+    body.innerHTML =
+      '<div class="success-view">' +
+        '<div class="success-icon">?</div>' +
+        '<p class="success-title">Verification inconclusive.</p>' +
+        '<p class="success-sub">We could not determine if you are human.</p>' +
+        '<p class="success-fine">*Restarting verification from the beginning.</p>' +
+      '</div>';
+    setTimeout(function() { goStep(0); }, 3500);
+  } else {
+    body.innerHTML =
+      '<div class="success-view">' +
+        '<div class="success-icon">✓</div>' +
+        '<p class="success-title">Verification complete.</p>' +
+        '<p class="success-sub">You appear to be human. Probably.</p>' +
+        '<p class="success-fine">*This determination is non-binding and may be revised at any time without notice.<br>' +
+        'UnfriendlyCaptcha is not responsible for any conclusions drawn from this result.</p>' +
+      '</div>';
+  }
+};
+
+// ── Admin panel ──────────────────────────────────────────────────────────────
+
+var STEP_NAMES = {
+  1: 'Date of birth',
+  2: 'Buzz wire',
+  3: 'Slingshot',
+  4: 'Impossible word',
+  5: 'Baseline test',
+  6: 'Progress bar',
+  7: 'Redundant checkbox'
+};
+
+function adminToggle() {
+  var p = document.getElementById('admin-panel');
+  var h = document.getElementById('howto-panel');
+  if (h) h.style.display = 'none';
+  p.style.display = p.style.display === 'none' || p.style.display === '' ? 'block' : 'none';
+}
+
+function howtoToggle() {
+  var p = document.getElementById('howto-panel');
+  var a = document.getElementById('admin-panel');
+  if (a) a.style.display = 'none';
+  p.style.display = p.style.display === 'none' || p.style.display === '' ? 'block' : 'none';
+}
+
+var HOWTO_STEPS = [
+  { name: 'Step 0 — Consent wall',
+    how: 'Wait at least 10 seconds AND check at least 10 items manually before using "Select all". Enable all items in both lists, then click the small "continue" link.' },
+  { name: 'Step 1 — Date of birth',
+    how: 'Hold the left arrow. After 1s it accelerates to months, after 3s to years. Choose a date 18+ years ago, then confirm.' },
+  { name: 'Step 2 — Buzz wire',
+    how: 'Hover over the GO marker, then trace the path slowly. Stay within ~15px of the line and don\'t exceed 0.85 px/ms.' },
+  { name: 'Step 3 — Slingshot',
+    how: 'Drag the black ball back and release. The target moves on sin/cos waves — anticipate where it will be when the ball arrives.' },
+  { name: 'Step 4 — Impossible word',
+    how: 'Type any text. The first attempt always fails (cosmic-ray excuse). The second attempt accepts anything ≥ 5 characters.' },
+  { name: 'Step 5 — Baseline test',
+    how: 'Five Blade Runner questions. Pick the keyword answer (Interlinked / Within / Cells / Against the dark / Interlinked). Wrong choices are disabled — pick again.' },
+  { name: 'Step 6 — Progress bar',
+    how: 'Just wait. The bar stalls at 95% with three uncertain messages, then completes automatically.' },
+  { name: 'Step 7 — Redundant checkbox',
+    how: 'Click "I\'m not a robot". Brief loading spinner, then the green check appears.' }
+];
+
+(function buildHowto() {
+  var panel = document.getElementById('howto-panel');
+  if (!panel) return;
+  var hdr = document.createElement('p');
+  hdr.style.cssText = 'font-size:11px;font-weight:500;color:#888;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;';
+  hdr.textContent = 'How to solve';
+  panel.appendChild(hdr);
+  var sub = document.createElement('p');
+  sub.style.cssText = 'font-size:11px;color:#bbb;margin-bottom:10px;';
+  sub.textContent = 'Spoilers for each step';
+  panel.appendChild(sub);
+  HOWTO_STEPS.forEach(function(s) {
+    var row = document.createElement('div');
+    row.className = 'howto-row';
+    var name = document.createElement('p');
+    name.className = 'howto-name';
+    name.textContent = s.name;
+    var desc = document.createElement('p');
+    desc.className = 'howto-desc';
+    desc.textContent = s.how;
+    row.appendChild(name);
+    row.appendChild(desc);
+    panel.appendChild(row);
+  });
+})();
+
+(function buildAdmin() {
+  var panel = document.getElementById('admin-panel');
+  var hdr = document.createElement('p');
+  hdr.style.cssText = 'font-size:11px;font-weight:500;color:#888;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;';
+  hdr.textContent = 'Demo admin';
+  panel.appendChild(hdr);
+  var sub = document.createElement('p');
+  sub.style.cssText = 'font-size:11px;color:#bbb;margin-bottom:10px;';
+  sub.textContent = 'Toggle steps on/off';
+  panel.appendChild(sub);
+
+  Object.keys(STEP_NAMES).forEach(function(n) {
+    var row = document.createElement('div');
+    row.className = 'admin-row';
+    var lbl = document.createElement('span');
+    lbl.textContent = STEP_NAMES[n];
+    var tog = document.createElement('label');
+    tog.className = 'toggle-wrap';
+    var inp = document.createElement('input');
+    inp.type = 'checkbox'; inp.checked = true;
+    inp.addEventListener('change', function() {
+      if (inp.checked) delete skippedSteps[n];
+      else skippedSteps[n] = true;
+    });
+    var track = document.createElement('span');
+    track.className = 'toggle-track';
+    tog.appendChild(inp); tog.appendChild(track);
+    row.appendChild(lbl); row.appendChild(tog);
+    panel.appendChild(row);
+  });
+})();
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+goStep(0);
+</script>
+
+</body>
+</html>
