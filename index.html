@@ -196,6 +196,20 @@ button.full { width: 100%; }
 .howto-name { font-size: 11px; font-weight: 500; color: #1a1a1a; margin-bottom: 3px; }
 .howto-desc { font-size: 11px; color: #555; line-height: 1.45; }
 
+/* ── Focus & keyboard access ── */
+*:focus { outline: none; }
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="checkbox"]:focus-visible,
+input:focus-visible,
+canvas:focus-visible,
+a:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+.dog-cell:focus-visible { outline-offset: 0; }
+#skip-link:focus-visible { color: #1a73e8 !important; }
+
 /* ── Loader ── */
 .loader-view {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -379,18 +393,48 @@ button.full { width: 100%; }
 
 </div>
 
-<div id="admin-btn" onclick="adminToggle()">&#9881; Demo</div>
-<div id="howto-btn" onclick="howtoToggle()">? How to solve</div>
+<div id="admin-btn" role="button" tabindex="0" aria-label="Demo controls"
+     onclick="adminToggle()"
+     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();adminToggle();}">&#9881; Demo</div>
+<div id="howto-btn" role="button" tabindex="0" aria-label="How to solve each step"
+     onclick="howtoToggle()"
+     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();howtoToggle();}">? How to solve</div>
 <div id="admin-panel"></div>
 <div id="howto-panel"></div>
 
-<a id="skip-link" onclick="goStep(7)" tabindex="-1"
+<a id="skip-link" href="#" tabindex="0"
+   onclick="event.preventDefault(); goStep(7);"
+   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goStep(7);}"
    style="position:fixed;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;color:rgba(0,0,0,0.08);text-decoration:none;cursor:pointer;user-select:none;letter-spacing:0.04em;font-family:'Roboto',sans-serif;">skip step</a>
 
 <script>
 var currentStep = 0;
 var TOTAL = 7;
 var skippedSteps = {};
+
+// ─── Keyboard accessibility helper ────────────────────────────────────────────
+
+function makeKeyClickable(el, label) {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  if (label) el.setAttribute('aria-label', label);
+  el.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      el.click();
+    }
+  });
+}
+
+// Esc closes any open admin/how-to panel
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var ap = document.getElementById('admin-panel');
+    var hp = document.getElementById('howto-panel');
+    if (ap) ap.style.display = 'none';
+    if (hp) hp.style.display = 'none';
+  }
+});
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
@@ -710,6 +754,7 @@ steps[0] = function(body) {
   var selectAll = document.createElement('span');
   selectAll.textContent = 'Select all';
   selectAll.style.cssText = 'font-size:12px;color:#666;text-decoration:underline;cursor:pointer;user-select:none;';
+  makeKeyClickable(selectAll, 'Select all consent items');
   selectAll.addEventListener('mouseenter', function() { selectAll.style.color = '#1a1a1a'; });
   selectAll.addEventListener('mouseleave', function() { selectAll.style.color = '#666'; });
   selectAll.addEventListener('click', function() {
@@ -766,6 +811,7 @@ steps[0] = function(body) {
   var continueLink = document.createElement('span');
   continueLink.textContent = 'continue';
   continueLink.style.cssText = 'display:block;text-align:center;font-size:13px;color:#ccc;cursor:default;margin-top:2px;padding:4px 0;';
+  makeKeyClickable(continueLink, 'Continue to next step');
   continueLink.addEventListener('click', function() {
     if (continueLink.dataset.ready) next();
   });
@@ -872,10 +918,27 @@ steps[1] = function(body) {
   rightBtn.addEventListener('mousedown', function() { startHold(1); });
   leftBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startHold(-1); });
   rightBtn.addEventListener('touchstart',function(e) { e.preventDefault(); startHold(1); });
-  ['mouseup','mouseleave','touchend','touchcancel'].forEach(function(ev) {
+  ['mouseup','mouseleave','touchend','touchcancel','blur'].forEach(function(ev) {
     leftBtn.addEventListener(ev, stopHold);
     rightBtn.addEventListener(ev, stopHold);
   });
+
+  // Keyboard hold — press & hold Space/Enter on a focused arrow button
+  function bindKeyHold(btn, dir) {
+    btn.addEventListener('keydown', function(e) {
+      if (e.repeat) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        shift(dir);
+        startHold(dir);
+      }
+    });
+    btn.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') stopHold();
+    });
+  }
+  bindKeyHold(leftBtn, -1);
+  bindKeyHold(rightBtn, 1);
 
   okBtn.onclick = function() {
     if (calcAge() < 18) {
@@ -1075,6 +1138,23 @@ steps[2] = function(body) {
   canvas.addEventListener('mouseleave', function() {
     if (state === 'active') triggerError('You left the wire — back to start');
   });
+
+  // Keyboard accessibility — Space/Enter completes the wire
+  canvas.tabIndex = 0;
+  canvas.setAttribute('role', 'button');
+  canvas.setAttribute('aria-label', 'Buzz wire path. Press Space to verify via keyboard.');
+  canvas.addEventListener('focus', function() {
+    if (state === 'idle') setNote('Press Space to verify via keyboard.');
+  });
+  canvas.addEventListener('keydown', function(e) {
+    if (state === 'complete') return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      state = 'complete'; progress = path.length - 1;
+      setNote('Verified.'); draw();
+      setTimeout(next, 700);
+    }
+  });
 };
 
 // ── Step 3: Slingshot mini-game ───────────────────────────────────────────────
@@ -1218,6 +1298,44 @@ steps[3] = function(body) {
   canvas.addEventListener('touchstart', startDrag);
   canvas.addEventListener('touchmove', function(e) { moveDrag(e); e.preventDefault(); });
   canvas.addEventListener('touchend', release);
+
+  // Keyboard accessibility — arrow keys to aim, Space/Enter to launch
+  canvas.tabIndex = 0;
+  canvas.setAttribute('role', 'application');
+  canvas.setAttribute('aria-label', 'Slingshot. Arrow keys to aim, Space to launch.');
+  canvas.addEventListener('focus', function() {
+    if (!launched && !finished && note) note.textContent = 'Arrow keys to aim, Space to launch.';
+  });
+  canvas.addEventListener('keydown', function(e) {
+    if (launched || finished) return;
+    var step = e.shiftKey ? 8 : 4;
+    var moved = false;
+    if (e.key === 'ArrowLeft')       { ball.x -= step; moved = true; }
+    else if (e.key === 'ArrowRight') { ball.x += step; moved = true; }
+    else if (e.key === 'ArrowUp')    { ball.y -= step; moved = true; }
+    else if (e.key === 'ArrowDown')  { ball.y += step; moved = true; }
+    else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      var dx = REST.x - ball.x, dy = REST.y - ball.y;
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) {
+        ball.x = REST.x; ball.y = REST.y;
+        return;
+      }
+      vx = dx * 0.2; vy = dy * 0.2;
+      launched = true;
+      return;
+    }
+    if (moved) {
+      e.preventDefault();
+      var pdx = ball.x - REST.x, pdy = ball.y - REST.y;
+      var dist = Math.sqrt(pdx*pdx + pdy*pdy);
+      if (dist > MAX_PULL) {
+        var a = Math.atan2(pdy, pdx);
+        ball.x = REST.x + Math.cos(a) * MAX_PULL;
+        ball.y = REST.y + Math.sin(a) * MAX_PULL;
+      }
+    }
+  });
 
   function tick() {
     if (!document.contains(canvas) || finished) return;
